@@ -6,7 +6,9 @@ import { io } from "socket.io-client";
 const ChatRoom = () => {
   const { id } = useParams();
 
-  const socket = useMemo(() => io("http://localhost:3000"), []);
+  const socket = useMemo(() => io("://httplocalhost:3000"), []);
+
+
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");

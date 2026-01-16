@@ -14,6 +14,13 @@ try {
     return res.status(400).json({ msg: "Email already exists" });
   }
 
+  const existsUsername = await User.findOne({ username });
+  if (existsUsername) {
+    return res.status(400).json({ msg: `${username} Username Already Exists Please try to select any other ` });
+  }
+
+
+
   const newUser = await User.create({
     username,
     email,

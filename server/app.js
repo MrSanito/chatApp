@@ -1,4 +1,7 @@
+import dotenv from "dotenv";
+dotenv.config(); // load variables into process.envnp
 import express from "express";
+
 import { Server } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
@@ -8,7 +11,6 @@ import messageRoutes from "./routes/messageRoutes.js";
 import nameRoutes from "./routes/nameRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import loginRoutes from "./routes/loginRoutes.js"
-import dotenv from "dotenv";
 import connectDb from "./config/db.js";
 
 const PORT = 3000;
@@ -23,9 +25,9 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-dotenv.config(); // load variables into process.envnp
 app.use(express.json());
 app.use(cookieParser());
+
 
 // db connection
 connectDb();

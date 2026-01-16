@@ -1,39 +1,13 @@
-import React from "react";
 import { useState, useActionState } from "react";
-import Box from "@mui/material/Box";
-import * as z from "zod";
 import { Button } from "@mui/material";
+import { UserSchema } from "../schemas/login.schema";
+import { loginService } from "../services/authServices";
 import axios from "axios";
 
 import TextField from "@mui/material/TextField";
 
 const Login = () => {
   const [email, setEmail] = useState(true);
-
-  const UserSchema = z.object({
-    username: z
-      .string({
-        invalid_type_error:
-          "Username must be text, not a number or other value.",
-      })
-      .min(3, "Username must be at least 3 characters long.")
-      .regex(
-        /^[a-zA-Z\s]+$/,
-        "Username must contain only letters and spaces, no numbers or special characters."
-      ),
-
-    email: z
-      .string({ invalid_type_error: "Email must be a text string." })
-      .includes(
-        "@",
-        "Please ensure the email includes the '@' symbol for a valid format."
-      ),
-
-    password: z
-      .string({ invalid_type_error: "Password must be a text string." })
-      .min(6, "Password is too short. It must be 6 characters or longer.")
-      .max(50, "Password is too long, keep it under 50 characters."),
-  });
 
   const submitHandler = async () => {
     // const res = axios.post()
@@ -42,43 +16,54 @@ const Login = () => {
     console.log(userData); // works 🎉
     let validatedData;
     try {
-      validatedData = UserSchema.parse(userData);
+      let schemaToUse = email
+        ? UserSchema.pick({ email: true, password: true })
+        : UserSchema.pick({ username: true, password: true });
+
+      validatedData = schemaToUse.parse(userData);
     } catch (err) {
       console.log(err);
-       const errors = {};
+      const errors = {};
 
-       // 🟢 CASE 1 → ZodError.issues exists
-       if (Array.isArray(err.issues)) {
-         err.issues.forEach((issue) => {
-           errors[issue.path[0]] = issue.message;
-         });
-         console.log("here i am returning error of this shit thing", errors);
+      // 🟢 CASE 1 → ZodError.issues exists
+      if (Array.isArray(err.issues)) {
+        err.issues.forEach((issue) => {
+          errors[issue.path[0]] = issue.message;
+        });
+        console.log("here i am returning error of this shit thing", errors);
 
-         return { errors };
-       }
+        return { errors };
+      }
 
-       // 🟢 CASE 2 → ZodError.errors exists
-       if (Array.isArray(err.errors)) {
-         err.errors.forEach((issue) => {
-           errors[issue.path[0]] = issue.message;
-         });
-         console.log("here i am returning error of this shit thing", errors);
+      // 🟢 CASE 2 → ZodError.errors exists
+      if (Array.isArray(err.errors)) {
+        err.errors.forEach((issue) => {
+          errors[issue.path[0]] = issue.message;
+        });
+        console.log("here i am returning error of this shit thing", errors);
 
-         return { errors };
-       }
+        return { errors };
+      }
     }
-    
 
-    axios
-      .post(`${backendUrl}/api/login`, {
-        validatedData,
-      })
-      .then(function (response) {
-        console.log(response);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+    try {
+      const res = await loginService({validatedData});
+
+      console.log("res", res.data.accessToken);
+
+      return {
+        
+        success: true,
+        message: res.data.message,
+      };
+    } catch (error) {
+      const backendError = error.response?.data;
+
+      return {
+        success: false,
+        message: backendError?.message || "Something went wrong",
+      };
+    }
   };
 
   const changeHandler = (e) => {
@@ -92,7 +77,7 @@ const Login = () => {
   const [userData, setUserData] = useState({
     email: "",
     password: "",
-    username: "", 
+    username: "",
   });
 
   const [state, formAction, isPending] = useActionState(submitHandler, {});
@@ -111,7 +96,7 @@ const Login = () => {
           <form action={formAction}>
             {email ? (
               <>
-                // if email is true
+                {/* // if email is true */}
                 <TextField
                   name="email"
                   value={userData.email}
@@ -202,6 +187,9 @@ const Login = () => {
                   },
               }}
             />
+            {state?.errors?.password && (
+              <p className="text-red-400 text-sm">{state.errors.password}</p>
+            )}
             <Button variant="contained" type="submit">
               Send
             </Button>
@@ -222,6 +210,15 @@ const Login = () => {
             <h2>email : {userData.username}</h2>
             <h2>email : {userData.email}</h2>
             <h2> password: {userData.password}</h2>
+            {state?.message && (
+              <p
+                className={`${
+                  state.success ? "text-green-400" : "text-red-500"
+                }`}
+              >
+                {state.message}
+              </p>
+            )}
           </div>
         </div>
       </div>

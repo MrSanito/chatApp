@@ -1,11 +1,10 @@
-import React from "react";
 
 import { useActionState, useState } from "react";
-import * as z from "zod";
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
-import axios from "axios";
 
+import { registerSchema } from "../schemas/register.schema";
+import { registerService } from "../services/authServices";
 
 
 const Register = () => {
@@ -15,45 +14,12 @@ const Register = () => {
     password: "",
   });
 
-  // ⭐ SCHEMA (outside the component)
-  const UserSchema = z.object({
-    username: z
-      .string({
-        invalid_type_error:
-          "Username must be text, not a number or other value.",
-      })
-      .min(3, "Username must be at least 3 characters long.")
-      .regex(
-        /^[a-zA-Z\s]+$/,
-        "Username must contain only letters and spaces, no numbers or special characters."
-      ),
-
-    email: z
-      .string({ invalid_type_error: "Email must be a text string." })
-      .includes(
-        "@",
-        "Please ensure the email includes the '@' symbol for a valid format."
-      ),
-
-    password: z
-      .string({ invalid_type_error: "Password must be a text string." })
-      .min(6, "Password is too short. It must be 6 characters or longer.")
-      .max(50, "Password is too long, keep it under 50 characters."),
-  });
-
   // ⭐ SAFE submitHandler
   const submitHandler = async (prevState, formData) => {
-    const backendUrl = import.meta.env.VITE_SERVER_URL;
-
-    // const userData = {
-    //   username: formData.get("username"),
-    //   email: formData.get("email"),
-    //   password: formData.get("password"),
-    // };
 
     // ⭐ ZOD VALIDATION (uncrashable)
     try {
-      UserSchema.parse(userData);
+      registerSchema.parse(userData);
     } catch (err) {
       console.log("RAW ZOD ERROR:", err);
 
@@ -81,10 +47,16 @@ const Register = () => {
 
     // ⭐ API CALL (safe)
     try {
-      const res = await axios.post(`${backendUrl}/api/register`, userData);
+        const res = await registerService(userData);
+
+
+
+
       return { success: true, data: res.data };
     } catch (error) {
-      return { error: "Server error. Please try again later.", msg: error };
+      console.log("error", error.response.data.msg)
+      const message = error.response.data.msg;
+      return { error: "  ", msg: message };
     }
   };
 
@@ -181,7 +153,7 @@ const Register = () => {
           )}
 
           {state?.error && (
-            <p className="text-red-400 text-sm mt-2">{state.error}</p>
+            <p className="text-red-400 text-sm mt-2">{state.error} {state.msg}</p>
           )}
         </div>
       </div>

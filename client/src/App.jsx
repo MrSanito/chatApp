@@ -8,11 +8,16 @@ import Experiment from "./pages/Experiment";
 import NameHandler from "./components/NameHandler";
 import Layout from "./Layout";
 import Login from "./pages/Login";
+ import AuthContext from "./pages/context/authContext";
 function App() {
   // const socket = useMemo(() => io("http://localhost:3000"), []);
 
+  // 🚀 Add this BEFORE rendering App
+
   return (
     <NameHandler>
+      <AuthContext>
+
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
@@ -25,6 +30,7 @@ function App() {
           <Route path="/login" element={<Login />} />
         </Route>
       </Routes>
+      </AuthContext>
     </NameHandler>
   );
 }
